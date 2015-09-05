@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+require 'irb'
+require_relative '../lib/ratebeer'
+
+puts
+puts "########################"
+puts "### RateBeer console ###"
+puts "########################"
+puts
+puts "You can begin by looking-up a beer, brewery, or style by ID#, "\
+     "or by searching for a beer or brewery, using any of the 'beer', "\
+     "'brewery', 'style', or 'search' methods."
+puts
+
+include RateBeer
+IRB.start
