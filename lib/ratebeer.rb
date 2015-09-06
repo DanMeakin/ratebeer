@@ -44,7 +44,7 @@ module RateBeer
   #   RateBeer::Brewery instances matching search parameters
   #
   def search(query)
-    Search.new.search(query)
+    Search.search(query)
   end
 
   [:beer, :brewery, :style, :search].each { |f| module_function f }
