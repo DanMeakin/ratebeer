@@ -14,25 +14,45 @@ module RateBeer
     include RateBeer::Scraping
     include RateBeer::URLs
 
+    class << self
+      # Create method which generates new search instance and immediately runs
+      # a search.
+      #
+      def search(query)
+        self.new(query).run_search
+      end
+    end
+
+    attr_reader :query
+
+    # Create a RateBeer::Search instance.
+    #
+    # @param [String] query Term to use to search RateBeer
+    #
+    def initialize(query)
+      @query = fix_query_param(query)
+    end
+
+    # Setter for query instance variable.
+    #
+    def query=(qry)
+      @query = fix_query_param(qry)
+    end
+
     # Search RateBeer for beers, brewers, etc.
     #
     # The search results page contains a series of tables each of which has the
     # "results" class, containing data of matching brewers, beers, and places
     # in that order. Only brewers and beers are extracted.
     #
-    # @params [String] query Text to be searched against
-    #
     # @return [Hash] Results of the search, broken into breweries and beers,
     #                with the attributes of these results contained therein.
     #
-    def search(query)
-      query = fix_query_param(query)
-
-      doc           = post_request(URI.join(BASE_URL, SEARCH_URL), 
-                                   { 'BeerName' => query })
-      headed_tables = doc.css('h2').map(&:text).zip(doc.css('table'))
+    def run_search
+      doc              = post_request(URI.join(BASE_URL, SEARCH_URL), post_params)
+      tables           = doc.css('h2').map(&:text).zip(doc.css('table'))
       beers, breweries = nil
-      headed_tables.each do |(heading, table)|
+      tables.each do |(heading, table)|
         case heading
         when 'brewers'
           breweries = process_breweries_table(table)
@@ -54,6 +74,12 @@ module RateBeer
     end
 
     private
+
+    # Generate parameters to use in POST request.
+    #
+    def post_params
+      { "BeerName" => @query }
+    end
 
     # Process breweries table returned in search.
     #
