@@ -72,6 +72,7 @@ module RateBeer
 
       brewery_info = retrieve_brewery_info
 
+      @beers = []
       if pagination?(@doc)
         (1..page_count(@doc)).flat_map do |page_no|
           @doc = noko_doc(URI.join(BASE_URL, brewery_url(id), "0/", "#{page_no}/"))
@@ -123,7 +124,7 @@ module RateBeer
     def retrieve_brewery_beers
       location, brewer = nil  # Variables used in the map below
       root = @doc.css('table.maintable.nohover').first
-      @beers = root.css('tr').drop(1).map do |row|
+      @beers += root.css('tr').drop(1).map do |row|
         if row.text =~ /^Brewed at (?<location>.+?)(?: by\/for (?<brewer>.+))?$/
           location = Regexp.last_match['location']
           brewer   = Regexp.last_match['brewer']
@@ -153,7 +154,7 @@ module RateBeer
           beer[:brewed_at]     = location unless location.nil?
           beer[:brewed_by_for] = brewer unless brewer.nil?
         end
-        Beer.new(beer[:id], beer[:name]) || nil
+        Beer.new(beer[:id], beer[:name]) rescue nil
       end.reject(&:nil?)
     end
   end

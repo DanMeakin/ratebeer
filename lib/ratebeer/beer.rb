@@ -33,6 +33,10 @@ module RateBeer
       inspect
     end
 
+    def ==(other_beer)
+      other_beer.is_a?(self.class) && id == other_beer.id
+    end
+
     # Return URL to access the beer details page.
     #
     def url
