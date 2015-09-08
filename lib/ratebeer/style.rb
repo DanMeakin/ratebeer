@@ -52,8 +52,6 @@ module RateBeer
       # RateBeer has a number of styles not accessible from the "beerstyles" 
       # landing page. This method scrapes these.
       #
-      # As it scrapes a number of pages for this data, this method is slow.
-      #
       # @return [Array<Hash>] List of hidden styles
       #
       def hidden_styles
