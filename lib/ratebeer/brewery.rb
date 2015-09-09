@@ -6,7 +6,7 @@ module RateBeer
     include RateBeer::Scraping
     include RateBeer::URLs
 
-    attr_reader :id
+    attr_reader :id, :established, :location
 
     # Create RateBeer::Brewery instance.
     #
@@ -16,9 +16,15 @@ module RateBeer
     # @param [Integer, String] id ID# for the brewery
     # @param [String] name The name of the specified brewery
     #
-    def initialize(id, name=nil)
+    def initialize(id, name: nil, **options)
       @id   = id
       @name = name unless name.nil?
+      if options
+        @established = options[:established]
+        @location    = options[:location]
+        @type        = options[:type]
+        @status      = options[:status]
+      end
     end
 
     def inspect
@@ -29,6 +35,10 @@ module RateBeer
 
     def to_s
       inspect
+    end
+
+    def ==(other_brewery)
+      other_brewery.is_a?(self.class) && id == other_brewery.id
     end
 
     def url

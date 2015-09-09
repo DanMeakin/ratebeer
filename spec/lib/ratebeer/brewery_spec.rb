@@ -3,7 +3,7 @@ require 'spec_helper'
 describe RateBeer::Brewery do
   before :all do
     @valid     = RateBeer::Brewery.new(8534) # ID for BrewDog
-    @with_name = RateBeer::Brewery.new(1069, "Cantillon Brewery")
+    @with_name = RateBeer::Brewery.new(1069, name: "Cantillon Brewery")
   end
 
   describe "#new" do

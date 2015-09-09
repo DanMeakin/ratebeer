@@ -100,7 +100,7 @@ module RateBeer
         }
         result[:url] = row.at_css('a')['href']
         result[:id]  = result[:url].split('/').last.to_i
-        Brewery.new(result[:id], result[:name])
+        Brewery.new(result[:id], name: result[:name])
       end
     end
 

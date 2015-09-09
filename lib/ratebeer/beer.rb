@@ -136,7 +136,7 @@ module RateBeer
                                      :name].zip([a['href'].split('/')
                                                           .last
                                                           .to_i, a.text]).to_h }.first
-      @brewery = Brewery.new(@brewery[:id], fix_characters(@brewery[:name]))
+      @brewery = Brewery.new(@brewery[:id], name: fix_characters(@brewery[:name]))
       @style = info_tbl.css('td')[1]
                        .css('div')
                        .first
