@@ -1,3 +1,7 @@
+require_relative "brewery"
+require_relative "style"
+require_relative "urls"
+
 module RateBeer
   class Location
     include RateBeer::Scraping
