@@ -4,10 +4,16 @@ require_relative "urls"
 
 module RateBeer
   class Location
+    # Keys for fields scraped on RateBeer
+    def self.data_keys
+      [:name,
+       :num_breweries,
+       :top_styles,
+       :breweries]
+    end
+
     include RateBeer::Scraping
     include RateBeer::URLs
-
-    attr_reader :id
 
     # Initialize a RateBeer::Location instance.
     #
@@ -18,47 +24,11 @@ module RateBeer
     # @param [Symbol] location_type Symbol representing either country or region
     # @param [String] name Name of this location
     #
-    def initialize(id, location_type, name=nil)
-      @id            = id
+    def initialize(id, location_type: location_type, name: nil, **options)
+      super
       @location_type = location_type
-      @name          = name unless name.nil?
     end
 
-    def inspect
-      val = "#<RateBeer::Location ##{@id} (#{@location_type.to_s})"
-      val << " - #{@name}" if instance_variable_defined?("@name")
-      val << ">"
-    end
-
-    def to_s
-      inspect
-    end
-
-    def ==(other_location)
-      other_location.is_a?(self.class) && id == other_location.id
-    end
-
-    def full_details
-      { id:             id,
-        name:           name,
-        url:            url,
-        top_styles:     top_styles,
-        num_breweries:  num_breweries,
-        breweries:      breweries }
-    end
-
-    [:name,
-     :num_breweries,
-     :top_styles,
-     :breweries].each do |attr|
-      define_method(attr) do
-        unless instance_variable_defined?("@#{attr}")
-          retrieve_details
-        end
-        instance_variable_get("@#{attr}")
-      end
-    end
-        
     private
 
     # Retrive details about this location from the website.
@@ -68,35 +38,37 @@ module RateBeer
     #
     def retrieve_details
       doc          = noko_doc(url)
-      root         = doc.css('#container table').first
-      style_info   = root.css('#tagside p').first
-      heading      = root.css('#brewerCover').first
-      brewery_info = root.css('#brewerTable')
+      style_info   = doc.css('#tagside p').first
+      heading      = doc.css('.col-lg-9').first
+      brewery_info = doc.css('#tabs table')
 
       @name = heading.at_css('h1')
                      .text
                      .split('Breweries')
                      .first
                      .strip
-      if @name == "n/a"
+      if @name == "n/a" || @name == "RateBeer Robot Oops!"
         raise PageNotFoundError.new("#{self.class.name} not found - #{id}")
       end
 
-      @num_breweries = heading.at_css('#showInfo')
+      @num_breweries = heading.at_css('li.active')
                               .text
-                              .split('active')
+                              .scan(/Active \((\d*)\)/)
+                              .first
                               .first
                               .to_i
-      summary       = heading.at_css('#hideInfo')
-                             .children
-                             .select(&:text?)
-                             .map { |entry| 
-                               [:type, 
-                                :count].zip(entry.text
-                                                 .split('-')
-                                                 .map { |z| (z.to_i.zero? ?
-                                                             z : 
-                                                             z.to_i) }) }
+      summary        = doc.at_css("#tagside")
+                          .at_css('h3')
+                          .next_element
+                          .children
+                          .select(&:text?)
+                          .map { |entry| 
+                            [:type, 
+                             :count].zip(entry.text
+                                              .split('-')
+                                              .map { |z| (z.to_i.zero? ?
+                                                          z : 
+                                                          z.to_i) }) }
 
       @styles = style_info.children
                          .each_slice(3)
@@ -104,7 +76,7 @@ module RateBeer
                            id    = style['href'].split('/').last
                            name  = style.text
                            count = count.text.gsub(nbsp, '').to_i
-                           Style.new(id, name)
+                           Style.new(id, name: name)
                          }
 
       @breweries = brewery_info.flat_map.with_index do |tbl, i|

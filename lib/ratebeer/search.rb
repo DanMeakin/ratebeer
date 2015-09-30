@@ -1,4 +1,6 @@
 require "i18n"
+require_relative "beer"
+require_relative "brewery"
 require_relative "scraping"
 require_relative "urls"
 
@@ -11,6 +13,13 @@ module RateBeer
   # specific beer or brewery.
   #
   class Search
+    # Keys for fields scraped on RateBeer
+    def self.data_keys
+      [:query,
+       :beers,
+       :breweries]
+    end
+
     include RateBeer::Scraping
     include RateBeer::URLs
 
@@ -19,7 +28,9 @@ module RateBeer
       # a search.
       #
       def search(query)
-        self.new(query).run_search
+        s = self.new(query)
+        { beers:      s.beers,
+          breweries:  s.breweries }
       end
     end
 
@@ -30,13 +41,19 @@ module RateBeer
     # @param [String] query Term to use to search RateBeer
     #
     def initialize(query)
-      @query = fix_query_param(query)
+      self.query = query
     end
 
     # Setter for query instance variable.
     #
     def query=(qry)
       @query = fix_query_param(qry)
+    end
+
+    def inspect
+      val = "#<#{self.class} - #{@query}"
+      val << " - #{@beers.count} beers / #{@breweries.count} breweries" if @beers || @breweries
+      val << ">"
     end
 
     # Search RateBeer for beers, brewers, etc.
@@ -49,15 +66,16 @@ module RateBeer
     #                with the attributes of these results contained therein.
     #
     def run_search
-      doc              = post_request(URI.join(BASE_URL, SEARCH_URL), post_params)
-      tables           = doc.css('h2').map(&:text).zip(doc.css('table'))
-      beers, breweries = nil
+      @beers, @breweries = nil
+      doc                = post_request(URI.join(BASE_URL, SEARCH_URL), post_params)
+      tables             = doc.css('h2').map(&:text).zip(doc.css('table'))
+      beers, breweries   = nil
       tables.each do |(heading, table)|
         case heading
         when 'brewers'
-          breweries = process_breweries_table(table)
+          @breweries = process_breweries_table(table)
         when 'beers'
-          beers = process_beers_table(table)
+          @beers = process_beers_table(table)
         end
       end
 
@@ -65,13 +83,14 @@ module RateBeer
       # of the beer, replace IPA with India Pale Ale, and add the additional 
       # results to these results.
       if query.downcase.include?(" ipa")
-        extra_beers = search(query.downcase.gsub(" ipa", " india pale ale"))[:beers]
-        beers = (beers || []) + extra_beers if extra_beers
+        alt_query = query.downcase.gsub(" ipa", " india pale ale")
+        extra_beers = self.class.new(alt_query).run_search.beers
+        @beers = ((@beers || []) + (extra_beers || [])).uniq
       end
-
-      { beers: (beers && beers.uniq), breweries: breweries }
-
+      return self
     end
+
+    alias retrieve_details run_search
 
     private
 
@@ -130,7 +149,7 @@ module RateBeer
         }
         result[:url] = row.at_css('a')['href']
         result[:id]  = result[:url].split('/').last.to_i
-        Beer.new(result[:id], result[:name])
+        Beer.new(result[:id], name: result[:name])
       end
     end
 

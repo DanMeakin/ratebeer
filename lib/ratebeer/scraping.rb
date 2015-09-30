@@ -10,10 +10,78 @@ module RateBeer
 
     class PageNotFoundError < StandardError; end
 
+    attr_reader :id
+
+    # Run method on inclusion in class.
+    def self.included(base)
+      base.data_keys.each do |attr|
+        define_method(attr) do
+          unless instance_variable_defined?("@#{attr}")
+            retrieve_details
+          end
+          instance_variable_get("@#{attr}")
+        end
+      end
+    end
+
+    # Create RateBeer::Scraper instance.
+    #
+    # Requires an ID#, and optionally accepts a name and options parameters.
+    #
+    # @param [Integer, String] id ID# of the entity which is to be retrieved
+    # @param [String] name Name of the entity to which ID# relates if known
+    # @param [hash] options Options hash for entity created
+    #
+    def initialize(id, name: nil, **options)
+      @id   = id
+      @name = name unless name.nil?
+    end
+
+    def inspect
+      val = "#<#{self.class} ##{@id}"
+      val << " - #{@name}" if instance_variable_defined?("@name")
+      val << ">"
+    end
+
+    def to_s
+      inspect
+    end
+
+    def ==(other_entity)
+      other_entity.is_a?(self.class) && id == other_entity.id
+    end
+
+    def url
+      @url ||= if respond_to?("#{demodularized_class_name.downcase}_url", id)
+                 send("#{demodularized_class_name.downcase}_url", id)
+               end
+    end
+
+    # Return full details of the scraped entity in a Hash.
+    #
+    def full_details
+      data = self.class
+                 .data_keys
+                 .map { |k| [k, send("#{k}")] }
+                 .to_h
+      { id:   id,
+        url:  url }.merge(data)
+    end
+
+    # Determine if data is paginated, or not.
+    #
+    # @param [Nokogiri::Doc] doc Nokogiri document to test for pagination
+    # @return [Boolean] true, if paginated, else false
+    #
     def pagination?(doc)
       !page_count(doc).nil?
     end
 
+    # Determine the number of pages in a document.
+    #
+    # @param [Nokogiri::Doc] doc Nokogiri document to test for pagination
+    # @return [Integer] Number of pages in the document
+    #
     def page_count(doc)
       doc.at_css('.pagination') && doc.at_css('.pagination')
                                       .css('b')
@@ -31,6 +99,8 @@ module RateBeer
         raise PageNotFoundError.new("Page not found - #{url}")
       end
     end
+
+    module_function :noko_doc
 
     # Emulate &nbsp; character for stripping, substitution, etc.
     #
@@ -63,6 +133,12 @@ module RateBeer
     def post_request(url, params)
       res = Net::HTTP.post_form(url, params)
       Nokogiri::HTML(res.body)
+    end
+
+    private
+
+    def demodularized_class_name
+      self.class.name.split("::").last
     end
   end
 end

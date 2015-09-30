@@ -4,7 +4,7 @@ describe RateBeer::Style do
   before :all do
     @valid   = RateBeer::Style.new(80)
     @invalid = RateBeer::Style.new(12345)
-    @with_name = RateBeer::Style.new(11, "Barleywine")
+    @with_name = RateBeer::Style.new(11, name: "Barleywine")
     @all_styles = RateBeer::Style.all_styles
   end
 
@@ -33,7 +33,7 @@ describe RateBeer::Style do
   end
 
   describe "#name" do
-    it "retrives name from RateBeer if not passed as parameter" do
+    it "retrieves name from RateBeer if not passed as parameter" do
       expect(@valid.name).to eq "Abt/Quadrupel"
     end
 

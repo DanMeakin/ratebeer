@@ -1,12 +1,23 @@
-require_relative 'scraping'
-require_relative 'urls'
+require_relative "scraping"
+require_relative "urls"
 
 module RateBeer
   class Brewery
+    # Each key represents an item of data accessible for each beer, and defines
+    # dynamically a series of methods for accessing this data.
+    #
+    def self.data_keys
+      [:name,
+       :type,
+       :address,
+       :telephone,
+       :beers]
+    end
+
     include RateBeer::Scraping
     include RateBeer::URLs
 
-    attr_reader :id, :established, :location
+    attr_reader :established, :location
 
     # Create RateBeer::Brewery instance.
     #
@@ -15,58 +26,15 @@ module RateBeer
     # 
     # @param [Integer, String] id ID# for the brewery
     # @param [String] name The name of the specified brewery
+    # @param [hash] options Options hash for entity created
     #
     def initialize(id, name: nil, **options)
-      @id   = id
-      @name = name unless name.nil?
+      super
       if options
         @established = options[:established]
         @location    = options[:location]
         @type        = options[:type]
         @status      = options[:status]
-      end
-    end
-
-    def inspect
-      val = "#<RateBeer::Brewery ##{@id}"
-      val << " - #{@name}" if instance_variable_defined?("@name")
-      val << ">"
-    end
-
-    def to_s
-      inspect
-    end
-
-    def ==(other_brewery)
-      other_brewery.is_a?(self.class) && id == other_brewery.id
-    end
-
-    def url
-      @url ||= brewery_url(id)
-    end
-
-    # Return full details of the brewery, in a Hash.
-    #
-    def full_details
-      { id:         id,
-        name:       name,
-        url:        url,
-        type:       type,
-        address:    address,
-        telephone:  telephone,
-        beers:      beers }
-    end
-
-    [:name,
-     :type,
-     :address,
-     :telephone,
-     :beers].each do |attr|
-      define_method(attr) do
-        unless instance_variable_defined?("@#{attr}")
-          retrieve_details
-        end
-        instance_variable_get("@#{attr}")
       end
     end
 
@@ -164,7 +132,7 @@ module RateBeer
           beer[:brewed_at]     = location unless location.nil?
           beer[:brewed_by_for] = brewer unless brewer.nil?
         end
-        Beer.new(beer[:id], beer[:name]) rescue nil
+        Beer.new(beer[:id], name: beer[:name]) rescue nil
       end.reject(&:nil?)
     end
   end

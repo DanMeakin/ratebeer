@@ -4,7 +4,7 @@ describe RateBeer::Region do
   before :all do
     @region    = RateBeer::Region.new(5) # California
     @invalid   = RateBeer::Region.new(12345) # Invalid
-    @with_name = RateBeer::Region.new(79, "London") # Greater London
+    @with_name = RateBeer::Region.new(79, name: "London") # Greater London
   end
 
   describe "#new" do

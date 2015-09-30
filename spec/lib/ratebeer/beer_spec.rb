@@ -4,7 +4,7 @@ describe RateBeer::Beer do
   before :all do
     @valid     = RateBeer::Beer.new(1411) # ID for Tennents Lager (sorry...)
     @retired   = RateBeer::Beer.new(213225) # ID for BrewDog Vice Bier
-    @with_name = RateBeer::Beer.new(422, "Stone IPA")
+    @with_name = RateBeer::Beer.new(422, name: "Stone IPA")
   end
 
   describe "#new" do

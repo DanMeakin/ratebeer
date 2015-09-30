@@ -4,14 +4,22 @@ require_relative 'urls'
 
 module RateBeer
   class Style
+    # Each key represents an item of data accessible for each beer, and defines
+    # dynamically a series of methods for accessing this data.
+    #
+    def self.data_keys
+      [:name,
+       :description,
+       :glassware,
+       :beers]
+    end
+
     include RateBeer::Scraping
     include RateBeer::URLs
 
-    attr_reader   :id
     attr_accessor :category
 
     class << self
-      include RateBeer::Scraping
       include RateBeer::URLs
 
       # Scrape all styles.
@@ -26,7 +34,7 @@ module RateBeer
       #   detailed pages
       #
       def all_styles(include_hidden=false)
-        doc  = noko_doc(URI.join(BASE_URL, '/beerstyles/'))
+        doc  = Scraping.noko_doc(URI.join(BASE_URL, '/beerstyles/'))
         root = doc.at_css('div#container table')
 
         categories = root.css('.groupname').map(&:text)
@@ -35,7 +43,7 @@ module RateBeer
         styles = style_node.flat_map.with_index do |list, i|
           list.css('a').map do |x| 
             category = categories[i]
-            Style.new(x['href'].split('/').last.to_i, x.text).tap { |s| 
+            Style.new(x['href'].split('/').last.to_i, name: x.text).tap { |s| 
               s.category = category 
             }
           end
@@ -60,55 +68,6 @@ module RateBeer
         hidden_ids.map do |id|
           Style.new(id)
         end
-      end
-    end
-
-    # Create RateBeer::Style instance.
-    #
-    # Requires the RateBeer ID# for the style in question.
-    #
-    # @param [Integer, String] id ID# of the style to retrieve
-    # @param [String] name Name of the style to which ID# relates if known
-    #
-    def initialize(id, name=nil)
-      @id   = id
-      @name = name unless name.nil?
-    end
-
-    def inspect
-      val = "#<RateBeer::Style ##{@id}"
-      val << " - #{@name}" if instance_variable_defined?("@name")
-      val << " (#{@category})" if instance_variable_defined?("@category")
-      val << ">"
-    end
-
-    def to_s
-      inspect
-    end
-
-    # Return URL to access the style details page
-    #
-    def url
-      @url ||= style_url(id)
-    end
-
-    def full_details
-      { id:           id,
-        name:         name,
-        description:  description,
-        glassware:    glassware,
-        beers:        beers }
-    end
-
-    [:name,
-     :description,
-     :glassware,
-     :beers].each do |attr|
-      define_method(attr) do
-        unless instance_variable_defined?("@#{attr}")
-          retrieve_details
-        end
-        instance_variable_get("@#{attr}")
       end
     end
 
@@ -137,7 +96,7 @@ module RateBeer
         cells = row.css('td')
         url   = cells[1].at_css('a')['href']
         [cells[0].text.to_i, Beer.new(url.split('/').last, 
-                                      fix_characters(cells[1].text))]
+                                      name: fix_characters(cells[1].text))]
       end.to_h
       nil
     end

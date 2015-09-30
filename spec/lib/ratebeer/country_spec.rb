@@ -4,7 +4,7 @@ describe RateBeer::Country do
   before :all do
     @country   = RateBeer::Country.new(241) # Scotland
     @invalid   = RateBeer::Country.new(12345) # Invalid
-    @with_name = RateBeer::Country.new(14, "Oceania - Australia") # Australia
+    @with_name = RateBeer::Country.new(14, name: "Oceania - Australia") # Australia
   end
 
   describe "#new" do

@@ -1,13 +1,29 @@
 require_relative "brewery"
 require_relative "style"
+require_relative "scraping"
 require_relative "urls"
 
 module RateBeer
   class Beer
+    # Each key represents an item of data accessible for each beer, and defines
+    # dynamically a series of methods for accessing this data.
+    #
+    def self.data_keys
+      [:name,
+       :brewery, 
+       :style, 
+       :glassware, 
+       :availability, 
+       :abv, 
+       :calories, 
+       :description,
+       :retired,
+       :rating]
+    end
+
     include RateBeer::Scraping
     include RateBeer::URLs
 
-    attr_reader :id
     attr_reader :review_order
     attr_reader :review_quantity
 
@@ -17,32 +33,12 @@ module RateBeer
     #
     # @param [Integer, String] id ID# of beer to retrieve
     # @param [String] name Name of the beer to which ID# relates if known
+    # @param [hash] options Options hash for entity created
     #
-    def initialize(id, name=nil)
-      @id   = id
-      @name = name unless name.nil?
+    def initialize(id, name: nil, **options)
+      super
     end
 
-    def inspect
-      val = "#<RateBeer::Beer ##{@id}"
-      val << " - #{@name}" if instance_variable_defined?("@name")
-      val << ">"
-    end
-
-    def to_s
-      inspect
-    end
-
-    def ==(other_beer)
-      other_beer.is_a?(self.class) && id == other_beer.id
-    end
-
-    # Return URL to access the beer details page.
-    #
-    def url
-      @url ||= beer_url(id)
-    end
-    
     # Return reviews of this beer.
     #
     def reviews
@@ -59,41 +55,6 @@ module RateBeer
     def review_quantity=(quantity)
       @reviews          = nil
       @review_quantity  = quantity
-    end
-
-    # Return full beer details in a Hash.
-    #
-    def full_details
-      { id:           id,
-        name:         name,
-        brewery:      brewery,       
-        url:          url,
-        style:        style, 
-        glassware:    glassware, 
-        availability: availability,
-        abv:          abv,
-        calories:     calories,
-        description:  description, 
-        retired:      retired,
-        rating:       rating }
-    end
-
-    [:name, 
-     :brewery, 
-     :style, 
-     :glassware, 
-     :availability, 
-     :abv, 
-     :calories, 
-     :description,
-     :retired,
-     :rating].each do |attr|
-      define_method(attr) do
-        unless instance_variable_defined?("@#{attr}")
-          retrieve_details
-        end
-        instance_variable_get("@#{attr}")
-      end
     end
 
     private
@@ -146,7 +107,7 @@ module RateBeer
                                    :name].zip([a['href'].split('/')
                                                         .last
                                                         .to_i, a.text]).to_h }.first
-      @style = Style.new(@style[:id], fix_characters(@style[:name]))
+      @style = Style.new(@style[:id], name: fix_characters(@style[:name]))
       @glassware = info_tbl.css('td')[1]
                           .css('div')[1]
                           .css('a')
