@@ -123,7 +123,8 @@ module RateBeer
       characters = { nbsp     => " ",
                      "\u0093" => "ž",
                      "\u0092" => "'",
-                     "\u0096" => "–" }
+                     "\u0096" => "–",
+                     / {2,}/ => " " }
       characters.each { |c, r| string.gsub!(c, r) }
       string.strip
     end 
