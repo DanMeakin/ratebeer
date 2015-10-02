@@ -1,4 +1,4 @@
-# RateBeer
+# RateBeer [![Build Status](https://travis-ci.org/DanMeakin/ratebeer.svg?branch=master)](https://travis-ci.org/DanMeakin/ratebeer) [![Code Climate](https://codeclimate.com/github/DanMeakin/ratebeer/badges/gpa.svg)](https://codeclimate.com/github/DanMeakin/ratebeer) [![Test Coverage](https://codeclimate.com/github/DanMeakin/ratebeer/badges/coverage.svg)](https://codeclimate.com/github/DanMeakin/ratebeer/coverage)
 A Ruby scraper for RateBeer.com
 
 ## Introduction
