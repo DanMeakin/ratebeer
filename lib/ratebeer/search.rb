@@ -47,6 +47,7 @@ module RateBeer
     # Setter for query instance variable.
     #
     def query=(qry)
+      clear_cached_data
       @query = fix_query_param(qry)
     end
 
@@ -211,5 +212,11 @@ module RateBeer
       problem_terms.each { |term, substitute| query.gsub!(term, substitute) }
       query.strip
     end 
+
+    # Clear cached search data.
+    #
+    def clear_cached_data
+      ["@beers", "@breweries"].each { |v| remove_instance_variable(v) if instance_variable_defined?(v) }
+    end
   end
 end
