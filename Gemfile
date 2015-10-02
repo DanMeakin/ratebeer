@@ -5,4 +5,8 @@ gemspec
 
 gem "i18n"
 gem "nokogiri"
-gem "rspec"
+
+group :test do
+  gem "rspec"
+  gem "rake"
+end
