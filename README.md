@@ -5,7 +5,7 @@ A Ruby scraper for RateBeer.com
 
 RateBeer is a scraper for RateBeer.com. At present, the library can be used to access data on beers, breweries, styles, countries and regions which are listed at RateBeer.com.
 
-This library has been influenced by the [https://github.com/alilja/ratebeer](great Python RateBeer scraper by ajila).
+This library has been influenced by the [great Python RateBeer scraper by ajila](https://github.com/alilja/ratebeer).
 
 ## Usage
 
