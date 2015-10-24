@@ -69,7 +69,7 @@ module RateBeer
       root     = doc.css('#container table').first
       info_tbl = root.css('table').first 
 
-      @name = doc.css("h1[itemprop='itemreviewed']")
+      @name = doc.css("h1[itemprop='name']")
                  .text
                  .strip
       @name = fix_characters(@name)

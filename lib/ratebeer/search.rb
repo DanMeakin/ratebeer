@@ -52,8 +52,10 @@ module RateBeer
     end
 
     def inspect
+      num_beers = @beers && @beers.count || 0
+      num_breweries = @breweries && @breweries.count || 0
       val = "#<#{self.class} - #{@query}"
-      val << " - #{@beers.count} beers / #{@breweries.count} breweries" if @beers || @breweries
+      val << " - #{num_beers} beers / #{num_breweries} breweries" if @beers || @breweries
       val << ">"
     end
 
