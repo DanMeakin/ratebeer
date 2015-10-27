@@ -24,9 +24,6 @@ module RateBeer
     include RateBeer::Scraping
     include RateBeer::URLs
 
-    attr_reader :review_order
-    attr_reader :review_quantity
-
     # Create RateBeer::Beer instance.
     #
     # Requires the RateBeer ID# for the beer in question.
@@ -41,20 +38,8 @@ module RateBeer
 
     # Return reviews of this beer.
     #
-    def reviews
-      @reviews ||= retrieve_reviews
-    end
-
-    def review_order=(order)
-      options = [:most_recent, :top_raters, :highest_score]
-      raise "unknown order: #{order}" unless options.include?(order)
-      @reviews      = nil
-      @review_order = order
-    end
-
-    def review_quantity=(quantity)
-      @reviews          = nil
-      @review_quantity  = quantity
+    def reviews(order: :most_recent, limit: 10)
+      Review.retrieve(self, order: order, limit: limit)
     end
 
     private
@@ -165,69 +150,5 @@ module RateBeer
 
       nil
     end
-
-    # Scrape beer reviews.
-    #
-    # Scrapes reviews attached to beer pages.
-    #
-    # @param [Symbol] order       The sort order of reviews. :most_recent, 
-    #   :top_raters, or :highest_score.
-    # @param [Integer] quantity   The number of reviews to retrieve.
-    #
-    # @return [Array<Hash>] An array of hashes containing review data.
-    #
-    def retrieve_reviews
-      url_suffix = case review_order
-                   when :most_recent
-                     "1/"
-                   when :top_raters
-                     "2/"
-                   when :highest_score
-                     "3/"
-                   else
-                     "1/"
-                   end
-
-      1.upto(((review_quantity || 10) / 10.0).ceil).flat_map do |page|
-        url = URI.join(BASE_URL, beer_url(id), url_suffix, "#{page}/")
-        doc = noko_doc(url)
-        root = doc.css('#container table table')[3]
-        # All reviews are contained within the sole cell in the sole row of the 
-        # selected table. Each review consists of rating information, details of 
-        # the reviewer, and the text of the review itself. 
-        #
-        # The components are contained within div, small, div tags respectively.
-        # We need to scrape these specifically.
-        root.css('td')
-            .children
-            .select { |x| x.name == 'div' || x.name == 'small' }
-            .map(&:text)
-            .reject { |x| x.empty? || x.include?("googleFillSlot") }
-            .each_slice(3).map do |(rating_data, reviewer_data, review)|
-              rating_pattern   = /^(?<total>\d+(\.\d+)?).+
-                                  AROMA\s(?<aroma>\d+\/10).+
-                                  APPEARANCE\s(?<appearance>\d+\/5).+
-                                  TASTE\s(?<taste>\d+\/10).+
-                                  PALATE\s(?<palate>\d+\/5).+
-                                  OVERALL\s(?<overall>\d+\/20)$/x
-              reviewer_pattern = /^(?<name>.+)\s\(\d+\)\s-\s?
-                                   (?<location>.+)?\s?-\s
-                                   (?<date>.+)$/x
-              rating   = rating_data.match(rating_pattern)
-              reviewer = reviewer_data.gsub(nbsp, ' ').match(reviewer_pattern)
-              { reviewer: reviewer[:name],
-                location: reviewer[:location].strip,
-                date:     Date.parse(reviewer[:date]),
-                rating:   { total:      rating[:total].to_f,
-                            overall:    Rational(rating[:overall]),
-                            aroma:      Rational(rating[:aroma]),
-                            appearance: Rational(rating[:appearance]),
-                            taste:      Rational(rating[:taste]),
-                            palate:     Rational(rating[:palate]) },
-                review:   review }
-        end
-      end.take(review_quantity || 10)
-    end
-
   end
 end
