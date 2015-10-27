@@ -108,6 +108,8 @@ module RateBeer
       Nokogiri::HTML("&nbsp;").text
     end
 
+    module_function :nbsp
+
     # Convert text keys to symbols
     #
     def symbolize_text(text)

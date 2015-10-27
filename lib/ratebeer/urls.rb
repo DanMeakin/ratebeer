@@ -12,6 +12,12 @@ module RateBeer
       "/beer/a/#{id}/"
     end
 
+    # Return URL to page containing reviews for a given beer
+    #
+    def review_url(beer_id, sort_suffix, page_number)
+      "/beer/a/#{beer_id}/#{sort_suffix}/#{page_number}/"
+    end
+
     # Return URL to info page for brewery with id
     #
     def brewery_url(id)

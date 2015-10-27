@@ -1,4 +1,5 @@
 require_relative "brewery"
+require_relative "review"
 require_relative "style"
 require_relative "scraping"
 require_relative "urls"
