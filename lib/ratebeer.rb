@@ -14,7 +14,7 @@ module RateBeer
   # @return [RateBeer::Beer] beer with passed ID#
   #
   def beer(id, name=nil)
-    Beer.new(id, name)
+    Beer.new(id, name: name)
   end
 
   # Create new brewery instance, using ID and name passed as arguments.
@@ -24,7 +24,7 @@ module RateBeer
   # @return [RateBeer::Brewery] brewery with passed ID#
   #
   def brewery(id, name=nil)
-    Brewery.new(id, name)
+    Brewery.new(id, name: name)
   end
 
   # Create new style instance, using ID and name passed as arguments.
@@ -34,7 +34,7 @@ module RateBeer
   # @return [RateBeer::Style] style with passed ID#
   #
   def style(id, name=nil)
-    Style.new(id, name)
+    Style.new(id, name: name)
   end
 
   # Search for a particulary beer or brewery.

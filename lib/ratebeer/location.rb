@@ -24,8 +24,12 @@ module RateBeer
     # @param [Symbol] location_type Symbol representing either country or region
     # @param [String] name Name of this location
     #
-    def initialize(id, location_type: location_type, name: nil, **options)
+    def initialize(id, location_type: nil, name: nil, **options)
       super
+      if location_type.nil? || !([:country, :region].include?(location_type))
+        raise ArgumentError.new("location_type must be supplied and must be "\
+                                "either country or region")
+      end
       @location_type = location_type
     end
 
