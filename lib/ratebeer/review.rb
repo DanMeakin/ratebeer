@@ -7,59 +7,43 @@ module RateBeer
   # also provides some scraping functionality for obtaining reviews.
   #
   class Review
-
     extend RateBeer::URLs
 
     class << self
       attr_reader :review_limit
       attr_reader :review_order
     
-      # Set the order in which reviews are listed and retrieved.
-      #
-      # @param [Symbol] order The order by which to sort reviews: can be
-      #   :most_recent, :top_raters, :highest_score
-      #
-      def review_order=(order)
-        options = [:most_recent, :top_raters, :highest_score]
-        raise "unknown order: #{order}" unless options.include?(order)
-        @review_order = order
-      end
-
-      # Set the number of reviews to retrieve.
-      #
-      # @param [Integer] quantity The number of reviews to retrieve from
-      #   RateBeer
-      #
-      def review_limit=(quantity)
-        @review_limit = quantity
-      end
-
       # Calculate the number of pages of reviews to retrieve.
       #
       # Ten reviews appear on a page, so this method calculates the number of
       # pages on this basis.
       #
+      # @param [Integer] limit The number of reviews to be retrieved
       # @return [Integer] Number of pages to be retrieved for number of reviews
       #
-      def num_pages
-        (@review_limit / 10.0).ceil
+      def num_pages(limit)
+        (limit / 10.0).ceil
       end
 
       # Determine the URL suffix required for a particular sort order.
       #
+      # @param [Symbol] order The desired sorting order
       # @return [String] The URL suffix required to obtain reviews sorted in
       #   the desired order
       #
-      def url_suffix
-        case @review_order 
+      def url_suffix(order)
+        options = [:most_recent, :top_raters, :highest_score]
+        unless options.include?(order)
+          raise ArgumentError.new("unknown ordering: #{order}") 
+        end
+
+        case order 
         when :most_recent
           "1"
         when :top_raters
           "2"
         when :highest_score
           "3"
-        else
-          "1"
         end
       end
 
@@ -73,9 +57,6 @@ module RateBeer
       #   beer, up to the review_limit
       #
       def retrieve(beer, order: :most_recent, limit: 10)
-        @review_order = order
-        @review_limit = limit
-
         if beer.is_a?(RateBeer::Beer)
           beer_id = beer.id
         elsif beer.is_a?(Integer)
@@ -84,8 +65,10 @@ module RateBeer
         else
           raise "unknown beer value: #{beer}"
         end
-        reviews = num_pages.times.flat_map do |page_number|
-          doc = RateBeer::Scraping.noko_doc(URI.join(BASE_URL, review_url(beer_id, url_suffix, page_number)))
+
+        reviews = num_pages(limit).times.flat_map do |page_number|
+          url = URI.join(BASE_URL, review_url(beer_id, url_suffix(order), page_number))
+          doc = RateBeer::Scraping.noko_doc(url)
           root = doc.css("#container table table")[3]
 
           # All reviews are contained within the sole cell in the sole row of
@@ -126,7 +109,7 @@ module RateBeer
                            comment:           review })
           end
         end
-        reviews.take(@review_limit)
+        reviews.take(limit)
       end
     end
     

@@ -2,6 +2,7 @@ require 'spec_helper'
 
 describe RateBeer::Review do
   before :all do
+    # Create Review instance with Beer instance
     @beer = RateBeer::Beer.new(135361) # BrewDog Punk IPA
     @constructed_params = { beer: @beer,
                             reviewer: "Johnny Tester", 
@@ -16,11 +17,18 @@ describe RateBeer::Review do
                                                 palate: Rational(3, 5) },
                             comment: "Specimen review of this beer."}
     @constructed = RateBeer::Review.new(@constructed_params)
+
+    # Create Review instance with beer ID#
+    @beer_id = 53
+    @params_with_beer_id = @constructed_params.dup.update(beer: @beer_id)
+    @constructed_with_beer_id = RateBeer::Review.new(@params_with_beer_id)
   end
 
-  describe "#retrieve" do
+  describe ".retrieve" do
     before :all do
+
       @retrieved     = RateBeer::Review.retrieve(@beer)
+      @reviews_by_id = RateBeer::Review.retrieve(@beer_id)
       # Test ordering
       @recent        = RateBeer::Review.retrieve(@beer, order: :most_recent)
       @top_raters    = RateBeer::Review.retrieve(@beer, order: :top_raters)
@@ -32,6 +40,14 @@ describe RateBeer::Review do
 
     it "retrieves reviews for the specified beer" do
       @retrieved.each { |r| expect(r).to be_a RateBeer::Review }
+    end
+
+    it "recognises a beer specified by ID#" do
+      expect(@reviews_by_id.first.beer).to eq RateBeer::Beer.new(@beer_id)
+    end
+
+    it "retrieves reviews for beer specified by ID#" do
+      @reviews_by_id.each { |r| expect(r).to be_a RateBeer::Review }
     end
 
     it "retrieves ten reviews by default" do
@@ -61,9 +77,28 @@ describe RateBeer::Review do
     end
   end
 
+  describe ".url_suffix" do
+    it "returns a numerical suffix for valid ordering methods" do
+      { most_recent:        "1",
+        top_raters:         "2",
+        highest_score:      "3" }.each { |k, v|
+          expect(RateBeer::Review.url_suffix(k)).to eq v
+        }
+    end
+
+    it "raises error when passed an invalid ordering method" do
+      invalid = :my_favourites
+      expect { RateBeer::Review.url_suffix(invalid) }.to raise_error(ArgumentError)
+    end
+  end
+
   describe "#new" do
     it "creates a review instance" do
       expect(@constructed).to be_a RateBeer::Review
+    end
+
+    it "creates a review instance when passed a beer ID#" do
+      expect(@constructed_with_beer_id).to be_a RateBeer::Review
     end
 
     it "requires a full set of parameters" do
