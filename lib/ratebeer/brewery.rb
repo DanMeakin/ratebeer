@@ -106,34 +106,56 @@ module RateBeer
         if row.text =~ /^Brewed at (?<location>.+?)(?: by\/for (?<brewer>.+))?$/
           location = Regexp.last_match['location']
           brewer   = Regexp.last_match['brewer']
+          nil
         else
-          beer = [:name,                 
-                  :abv, 
-                  :avg_rating, 
-                  :overall_rating, 
-                  :style_rating, 
-                  :num_ratings].zip([0, 2, 3, 4, 5, 6].map { |x|
-                         row.css('td')[x].text.gsub(nbsp, ' ').strip 
-                  }).to_h
-          url  = row.css('td').first.css('a').first['href']
-          beer[:name] = fix_characters(beer[:name])
-          beer[:url]  = url
-          beer[:id]   = url.split('/').last
-
-          # Convert numbers where needed
-          [:abv, 
-           :avg_rating].each { |k| beer[k] = beer[k].to_f }
-          [:overall_rating, 
-           :style_rating, 
-           :num_ratings,
-           :id].each { |k| beer[k] = beer[k].to_i }
-
-          # Apply additional location and brewer information if scraped
-          beer[:brewed_at]     = location unless location.nil?
-          beer[:brewed_by_for] = brewer unless brewer.nil?
+          process_beer_row(row, location, brewer)
         end
-        Beer.new(beer[:id], name: beer[:name]) rescue nil
       end.reject(&:nil?)
+    end
+
+    # Process a row of data representing one beer brewed by/at a brewery.
+    #
+    # @param [Nokogiri::XML::Element] row HTML TR row wrapped as a Nokogiri
+    #   element
+    # @param [String] location the location at which a brewery's beer is brewed
+    #   where this location differs from the brewery's regular brewsite/venue
+    # @param [String] brewer the client for whom this brewery brewed the beer,
+    #   where the brewery is brewing for a different company/brewery
+    # @return [RateBeer::Beer] a beer object representing the scraped beer, 
+    #   containing scraped attributes
+    #
+    def process_beer_row(row, location=nil, brewer=nil)
+      # Attributes stored in each table row, with indices representing their
+      # position in each row
+      attributes = { name:            0,
+                     abv:             2,
+                     avg_rating:      3,
+                     overall_rating:  4,
+                     style_rating:    5,
+                     num_ratings:     6 }
+
+      beer = attributes.reduce({}) do |beer_hash, (attr, i)| 
+        val = row.css('td')[i].text.gsub(nbsp, ' ').strip rescue nil
+        case attr
+        when :name
+          fix_characters(val)
+        when :abv, :avg_rating
+          val = val.to_f
+        when :overall_rating, :style_rating, :num_ratings
+          val = val.to_i
+        end
+        beer_hash[attr] = val
+        beer_hash
+      end
+      beer[:url] = row.css('td').first.css('a').first['href']
+      id = beer[:url].split('/').last.to_i
+
+      # Apply additional location and brewer information if scraped
+      beer[:brewed_at]     = location unless location.nil?
+      beer[:brewed_by_for] = brewer unless brewer.nil?
+
+      # Create beer instance from scraped data
+      Beer.new(id, beer)
     end
   end
 end
