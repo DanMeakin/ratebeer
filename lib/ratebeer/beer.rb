@@ -63,7 +63,8 @@ module RateBeer
 
       # If this beer is an alias, change ID to that of "proper" beer and
       # retrieve details of the proper beer instead.
-      if root.css('tr')[1].css('div div').children.first.text == "Also known as "
+      alias_pattern = /Also known as(.|\n)*Proceed to the aliased beer\.{3}/
+      if root.css('tr')[1].css('div div').text =~ alias_pattern
         alias_node = root.css('tr')[1]
                          .css('div div')
                          .css('a')
