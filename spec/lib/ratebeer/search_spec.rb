@@ -57,11 +57,11 @@ describe RateBeer::Search do
     it "returns a list of specific breweries matching the query parameter" do
       breweries = @successful_search.breweries
       names     = breweries.map(&:name)
-      expect(names).to include("ABC Brewing Company (Heineken)",
-                               "Aoke Brewery (Heineken)",
-                               "Asia Pacific Brewery (Lanka) Ltd. (Heineken)",
-                               "Beamish & Crawford (S&N, Heineken)",
-                               "Berkshire (Heineken UK)")
+      expect(names).to include("Heineken UK",
+                               "Heineken Italia",
+                               "Al Ahram (Heineken)",
+                               "Pivovar Corgon (Heineken)",
+                               "Bralima (Heineken)")
     end
   end
 end
