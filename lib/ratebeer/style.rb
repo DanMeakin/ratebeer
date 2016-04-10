@@ -35,7 +35,7 @@ module RateBeer
       #
       def all_styles(include_hidden=false)
         doc  = Scraping.noko_doc(URI.join(BASE_URL, '/beerstyles/'))
-        root = doc.at_css('div#container table')
+        root = doc.at_css('div.container-fluid table')
 
         categories = root.css('.groupname').map(&:text)
         style_node = root.css('.styleGroup')
