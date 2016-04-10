@@ -35,6 +35,9 @@ module RateBeer
     def initialize(id, name: nil, **options)
       @id   = id
       @name = name unless name.nil?
+      options.each do |k, v|
+        instance_variable_set("@#{k.to_s}", v)
+      end
     end
 
     def inspect
