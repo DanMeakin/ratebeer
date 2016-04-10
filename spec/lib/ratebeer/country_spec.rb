@@ -60,7 +60,6 @@ describe RateBeer::Country do
       expect(@country.full_details).to include(:id,
                                                :name,
                                                :url,
-                                               :top_styles,
                                                :num_breweries,
                                                :breweries)
     end

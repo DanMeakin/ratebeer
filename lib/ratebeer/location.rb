@@ -8,7 +8,6 @@ module RateBeer
     def self.data_keys
       [:name,
        :num_breweries,
-       :top_styles,
        :breweries]
     end
 
@@ -42,7 +41,6 @@ module RateBeer
     #
     def retrieve_details
       doc          = noko_doc(url)
-      style_info   = doc.css('#tagside p').first
       heading      = doc.css('.col-lg-9').first
       brewery_info = doc.css('#tabs table')
 
@@ -61,27 +59,6 @@ module RateBeer
                               .first
                               .first
                               .to_i
-      summary        = doc.at_css("#tagside")
-                          .at_css('h3')
-                          .next_element
-                          .children
-                          .select(&:text?)
-                          .map { |entry| 
-                            [:type, 
-                             :count].zip(entry.text
-                                              .split('-')
-                                              .map { |z| (z.to_i.zero? ?
-                                                          z : 
-                                                          z.to_i) }) }
-
-      @styles = style_info.children
-                         .each_slice(3)
-                         .map { |(style, count, _)|
-                           id    = style['href'].split('/').last
-                           name  = style.text
-                           count = count.text.gsub(nbsp, '').to_i
-                           Style.new(id, name: name)
-                         }
 
       @breweries = brewery_info.flat_map.with_index do |tbl, i|
         status = i == 0 ? 'Active' : 'Out of Business'
