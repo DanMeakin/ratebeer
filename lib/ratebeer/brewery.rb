@@ -154,6 +154,12 @@ module RateBeer
       beer[:brewed_at]     = location unless location.nil?
       beer[:brewed_by_for] = brewer unless brewer.nil?
 
+      # Transform ratings into correct format
+      beer[:rating] = { overall: beer[:overall_rating], 
+                        style: beer[:style_rating],
+                        ratings: beer[:num_ratings],
+                        weighted_avg: beer[:avg_rating] }
+
       # Create beer instance from scraped data
       Beer.new(id, beer)
     end
