@@ -63,7 +63,7 @@ module RateBeer
       @breweries = brewery_info.flat_map.with_index do |tbl, i|
         status = i == 0 ? 'Active' : 'Out of Business'
 
-        tbl.css('tr').flat_map do |row|
+        tbl.css('tr').drop(1).flat_map do |row|
           cells = row.css('td')
           next if cells.empty?
           id       = cells[0].at_css('a')['href'].split('/').last.to_i
@@ -74,7 +74,7 @@ module RateBeer
                              .sub('(Out of Business)', '')
                              .strip
           type = cells[1].text.strip
-          established = status == 'Active' ? cells[4].text.to_i : nil
+          established = status == 'Active' ? cells[3].text.to_i : nil
           Brewery.new(id,
                       name:        name,
                       location:    location,
