@@ -1,8 +1,9 @@
-require "i18n"
-require_relative "beer"
-require_relative "brewery"
-require_relative "scraping"
-require_relative "urls"
+require 'i18n'
+require 'thread'
+require_relative 'beer'
+require_relative 'brewery'
+require_relative 'scraping'
+require_relative 'urls'
 
 module RateBeer
   
@@ -142,18 +143,33 @@ module RateBeer
     #   url and ID
     #
     def process_beers_table(table)
-      table.css('tr').drop(1).map do |row|
-        result = [:id, :name, :score, :ratings, :url].zip([nil]).to_h
-        content = row.element_children.map { |x| fix_characters(x.text) }
-        result[:name]    = content.first
-        result[:score], result[:ratings] = content.values_at(3, 4)
-                                                  .map { |n| 
-          n.nil? || n.empty? ? nil : n.to_i 
-        }
-        result[:url] = row.at_css('a')['href']
-        result[:id]  = result[:url].split('/').last.to_i
-        Beer.new(result[:id], name: result[:name])
+      beers = []
+      threads = []
+      mutex = Mutex.new
+      table.css('tr').drop(1).map do |r|
+        threads << Thread.new do
+          beer = process_beer_row(r)
+          mutex.synchronize { beers << beer }
+        end
       end
+      threads.each(&:join)
+      beers
+    end
+
+    # Processes one row from a beer table.
+    def process_beer_row(row)
+      result = [:id, :name, :score, :ratings, :url].zip([nil]).to_h
+      content = row.element_children.map { |x| fix_characters(x.text) }
+      result[:name] = content.first
+      result[:score], result[:ratings] = content.values_at(3, 4)
+                                                .map do |n|
+        n.nil? || n.empty? ? nil : n.to_i
+      end
+      result[:url] = row.at_css('a')['href']
+      result[:id]  = result[:url].split('/').last.to_i
+      b = Beer.new(result[:id], name: result[:name])
+      b.brewery.name
+      b
     end
 
     # Amend search query string for better results
