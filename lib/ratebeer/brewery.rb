@@ -38,6 +38,14 @@ module RateBeer
       end
     end
 
+    def name
+      @name ||= retrieve_brewery_info
+    end
+
+    def beers
+      @beers ||= retrieve_brewery_beers
+    end
+
     private
 
     # Retrieve details about this brewery from the website.
