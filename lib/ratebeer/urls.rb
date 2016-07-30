@@ -19,9 +19,13 @@ module RateBeer
     end
 
     # Return URL to info page for brewery with id
-    #
     def brewery_url(id)
       "/brewers/a/#{id}/"
+    end
+
+    # Return URL to beer listing page for brewery with id.
+    def brewery_beers_url(id)
+      "/Ratings/Beer/ShowBrewerBeers.asp?BrewerID=#{id}"
     end
 
     # Return URL to info page for country with id

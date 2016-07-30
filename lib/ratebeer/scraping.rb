@@ -16,9 +16,7 @@ module RateBeer
     def self.included(base)
       base.data_keys.each do |attr|
         define_method(attr) do
-          unless instance_variable_defined?("@#{attr}")
-            retrieve_details
-          end
+          send("scrape_#{attr}") unless instance_variable_defined?("@#{attr}")
           instance_variable_get("@#{attr}")
         end
       end
@@ -58,6 +56,11 @@ module RateBeer
       @url ||= if respond_to?("#{demodularized_class_name.downcase}_url", id)
                  send("#{demodularized_class_name.downcase}_url", id)
                end
+    end
+
+    # Extracts an ID# from an a element containing a link to an entity.
+    def id_from_link(node)
+      node.attribute('href').value.split('/').last.to_i
     end
 
     # Return full details of the scraped entity in a Hash.

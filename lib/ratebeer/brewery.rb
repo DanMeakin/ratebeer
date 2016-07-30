@@ -1,7 +1,11 @@
-require_relative "scraping"
-require_relative "urls"
+# frozen_string_literal: true
+
+require_relative 'scraping'
+require_relative 'urls'
 
 module RateBeer
+  # The brewery class represents one brewery found in RateBeer, with methods
+  # for accessing information found about the brewery on the site.
   class Brewery
     # Each key represents an item of data accessible for each beer, and defines
     # dynamically a series of methods for accessing this data.
@@ -19,11 +23,14 @@ module RateBeer
 
     attr_reader :established, :location
 
+    # CSS selector for the brewery information element.
+    INFO_SELECTOR = "div[itemtype='http://schema.org/LocalBusiness']".freeze
+
     # Create RateBeer::Brewery instance.
     #
     # Requires the RateBeer ID# for the brewery in question. Optionally accepts
     # a name parameter where the name is already known.
-    # 
+    #
     # @param [Integer, String] id ID# for the brewery
     # @param [String] name The name of the specified brewery
     # @param [hash] options Options hash for entity created
@@ -38,87 +45,70 @@ module RateBeer
       end
     end
 
-    def name
-      @name ||= retrieve_brewery_info
+    def doc
+      @doc ||= noko_doc(URI.join(BASE_URL, brewery_url(id)))
+      validate_brewery
+      @doc
     end
 
-    def beers
-      @beers ||= retrieve_brewery_beers
+    def info_root
+      @info_root ||= doc.at_css(INFO_SELECTOR)
     end
 
     private
 
-    # Retrieve details about this brewery from the website.
+    # Validates whether the brewery with the given ID exists.
     #
-    # This method stores the retrieved details in instance variables
-    # of the brewery instance.
-    #
-    def retrieve_details
-      @doc  = noko_doc(URI.join(BASE_URL, brewery_url(id)))
-
-      brewery_info = retrieve_brewery_info
-
-      @beers = []
-      if pagination?(@doc)
-        (1..page_count(@doc)).flat_map do |page_no|
-          @doc = noko_doc(URI.join(BASE_URL, brewery_url(id), "0/", "#{page_no}/"))
-          retrieve_brewery_beers
-        end
-      else
-        retrieve_brewery_beers
+    # Throws an exception if the brewery does not exist.
+    def validate_brewery
+      error_message = "This brewer, ID##{id}, is no longer in the database. "\
+                      'RateBeer Home'
+      if @doc.at_css('body p').text == error_message
+        raise PageNotFoundError.new("Brewery not found - #{id}")
       end
-      nil
     end
 
-    # Scrape brewery info from Nokogiri Doc for brewery page
-    #
-    def retrieve_brewery_info
-      root = @doc.css('#container table').first
-      contact_node = root.css('td').first
-
-      @name = fix_characters(root.css('h1').first.text)
-      raise PageNotFoundError.new("Brewery not found - #{id}") if @name.empty?
-
-      @type = root.css('span.beerfoot')
-                  .select { |x| x.text =~ /Type: .*/ }
-                  .first
-                  .text
-                  .strip
-                  .split("Type: ")
-                  .last
-                  .split(/\s{2,}/)
-                  .first
-      @address = root.css('div[itemprop="address"] b span')
-                     .map { |elem| key = case elem.attributes['itemprop'].value
-                                         when 'streetAddress' then :street
-                                         when 'addressLocality' then :city
-                                         when 'addressRegion' then :state
-                                         when 'addressCountry' then :country
-                                         when 'postalCode' then :postcode
-                                         else raise "unrecognised attribute"
-                                         end
-                                   [key, elem.text.strip] }
-                     .to_h
-
-      @telephone = root.css('span[itemprop="telephone"]').first && 
-                   root.css('span[itemprop="telephone"]').first.text
-
+    # Scrapes the brewery's name.
+    def scrape_name
+      @name = fix_characters(info_root.css('h1').first.text)
     end
 
-    # Scrape beer details from Nokogiri Doc for brewery page
-    #
-    def retrieve_brewery_beers
-      location, brewer = nil  # Variables used in the map below
-      root = @doc.css('table.maintable.nohover').first
-      @beers += root.css('tr').drop(1).map do |row|
-        if row.text =~ /^Brewed at (?<location>.+?)(?: by\/for (?<brewer>.+))?$/
-          location = Regexp.last_match['location']
-          brewer   = Regexp.last_match['brewer']
-          nil
-        else
-          process_beer_row(row, location, brewer)
-        end
-      end.reject(&:nil?)
+    # Scrapes the brewery's address.
+    def scrape_address
+      address_root = info_root.css('div[itemprop="address"] b span')
+      address_details = address_root.map { |e| extract_address_element(e) }
+      @address = address_details.to_h
+    end
+
+    # Extracts one element of address details from a node contained within the
+    # address div.
+    def extract_address_element(node)
+      key = case node.attributes['itemprop'].value
+            when 'streetAddress'   then :street
+            when 'addressLocality' then :city
+            when 'addressRegion'   then :state
+            when 'addressCountry'  then :country
+            when 'postalCode'      then :postcode
+            else raise 'unrecognised attribute'
+            end
+      [key, node.text.strip]
+    end
+
+    # Scrapes the telephone number of the brewery.
+    def scrape_telephone
+      @telephone = info_root.at_css('span[itemprop="telephone"]')
+    end
+
+    # Scrapes the type of brewery.
+    def scrape_type
+      @type = info_root.css('div')[1]
+    end
+
+    # Scrapes beers list for brewery.
+    def scrape_beers
+      beers_doc = noko_doc(URI.join(BASE_URL, brewery_beers_url(id)))
+      rows = beers_doc.css('table#brewer-beer-table tbody tr')
+      @beers = rows.map { |row| process_beer_row(row) }.reject(&:nil?)
     end
 
     # Process a row of data representing one beer brewed by/at a brewery.
@@ -129,47 +119,70 @@ module RateBeer
     #   where this location differs from the brewery's regular brewsite/venue
     # @param [String] brewer the client for whom this brewery brewed the beer,
     #   where the brewery is brewing for a different company/brewery
-    # @return [RateBeer::Beer] a beer object representing the scraped beer, 
+    # @return [RateBeer::Beer] a beer object representing the scraped beer,
     #   containing scraped attributes
     #
-    def process_beer_row(row, location=nil, brewer=nil)
-      # Attributes stored in each table row, with indices representing their
-      # position in each row
-      attributes = { name:            0,
-                     abv:             2,
-                     avg_rating:      3,
-                     overall_rating:  4,
-                     style_rating:    5,
-                     num_ratings:     6 }
+    def process_beer_row(row)
+      beer = process_beer_name_cell(row.css('td').first)
+      beer[:abv] = row.css('td')[1].text.to_f
+      beer[:date_added] = Date.strptime(row.css('td')[2].text, '%m/%d/%Y')
+      Beer.new(id, beer.merge(process_rating_info(row)))
+    end
 
-      beer = attributes.reduce({}) do |beer_hash, (attr, i)| 
-        val = row.css('td')[i].text.gsub(nbsp, ' ').strip rescue nil
-        case attr
-        when :name
-          fix_characters(val)
-        when :abv, :avg_rating
-          val = val.to_f
-        when :overall_rating, :style_rating, :num_ratings
-          val = val.to_i
-        end
-        beer_hash[attr] = val
-        beer_hash
+    # Processes the cell containing the beer's name and other information.
+    #
+    # This cell contains information on the beer's name, its style, whether it
+    # is retired, and who is was brewed for or by.
+    def process_beer_name_cell(node)
+      beer_link = node.at_css('strong a')
+      name = fix_characters(beer_link.text)
+      id = id_from_link(beer_link)
+      info = node.at_css('em.real-small')
+      brewed_at_for = process_brewed_at_for(node)
+      style = process_style_info(node)
+      { id:     id,
+        name:   name,
+        style:  style,
+        retired:  info && info.text =~ /retired/ || false }.merge(brewed_at_for)
+    end
+
+    # Processes information on who the beer was brewed for or by, or at.
+    def process_brewed_at_for(node)
+      brewed_at_for_node = node.at_css('div.small em')
+      return {} if brewed_at_for_node.nil?
+      node_text = brewed_at_for_node.children.first.text
+      key = if node_text.include?('Brewed at')
+              :brewed_at
+            elsif node_text.include?('Brewed by/for')
+              :brewed_by_for
+            end
+      other_brewer_node = brewed_at_for_node.at_css('a')
+      { key => Brewery.new(id_from_link(other_brewer_node),
+                           name: other_brewer_node.text) }
+    end
+
+    # Processes the style information contained within a beer name cell.
+    def process_style_info(node)
+      style_node = node.css('a').find do |n|
+        n.children.any? { |c| c.name == 'span' }
       end
-      beer[:url] = row.css('td').first.css('a').first['href']
-      id = beer[:url].split('/').last.to_i
+      name = style_node.text
+      id = id_from_link(style_node)
+      Style.new(id, name: name)
+    end
 
-      # Apply additional location and brewer information if scraped
-      beer[:brewed_at]     = location unless location.nil?
-      beer[:brewed_by_for] = brewer unless brewer.nil?
-
-      # Transform ratings into correct format
-      beer[:rating] = { overall: beer[:overall_rating], 
-                        style: beer[:style_rating],
-                        ratings: beer[:num_ratings],
-                        weighted_avg: beer[:avg_rating] }
-
-      # Create beer instance from scraped data
-      Beer.new(id, beer)
+    # Processes rating information from a beer row.
+    def process_rating_info(row)
+      cell_indices = { avg_rating:      4,
+                       overall_rating:  5,
+                       style_rating:    6,
+                       num_ratings:     7 }
+      rating = cell_indices.map do |attr, i|
+        val = row.css('td')[i].text.gsub(nbsp, ' ').strip
+        conversion = attr == :avg_rating ? :to_f : :to_i
+        [attr, val.send(conversion)]
+      end
+      rating.to_h
     end
   end
 end
