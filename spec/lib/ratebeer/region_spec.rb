@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe RateBeer::Region do
   before :all do
-    @region    = RateBeer::Region.new(5) # California
+    @region    = RateBeer::Region.new(30) # New Jersey
     @invalid   = RateBeer::Region.new(12345) # Invalid
     @with_name = RateBeer::Region.new(79, name: "London") # Greater London
   end
@@ -23,7 +23,7 @@ describe RateBeer::Region do
 
   describe "#name" do
     it "retrives name from RateBeer if not passed as parameter" do
-      expect(@region.name).to eq "California"
+      expect(@region.name).to eq 'New Jersey'
     end
 
     it "uses name details if passed as parameter" do
@@ -37,11 +37,9 @@ describe RateBeer::Region do
     end
 
     it "returns a series of RateBeer::Brewery instances" do
-      expected_breweries = [15430, 
-                            108, 
-                            19927, 
-                            11855, 
-                            8889].map { |i| RateBeer::Brewery.new(i) }
+      expected_breweries = [25_211,
+                            3132,
+                            1097].map { |i| RateBeer::Brewery.new(i) }
       expect(@region.breweries).to include(*expected_breweries)
     end
 

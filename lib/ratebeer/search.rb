@@ -6,7 +6,6 @@ require_relative 'scraping'
 require_relative 'urls'
 
 module RateBeer
-  
   # Stop I18N from enforcing locale, to avoid error message
   I18n.enforce_available_locales = false
 
@@ -29,7 +28,7 @@ module RateBeer
       # a search.
       #
       def search(query)
-        s = self.new(query)
+        s = new(query)
         { beers:      s.beers,
           breweries:  s.breweries }
       end
@@ -41,8 +40,9 @@ module RateBeer
     #
     # @param [String] query Term to use to search RateBeer
     #
-    def initialize(query)
+    def initialize(query, scrape_beer_brewers = false)
       self.query = query
+      @scrape_breweries = scrape_beer_brewers
     end
 
     # Setter for query instance variable.
@@ -50,6 +50,10 @@ module RateBeer
     def query=(qry)
       clear_cached_data
       @query = fix_query_param(qry)
+    end
+
+    def ==(other)
+      query == other.query
     end
 
     def inspect
@@ -71,7 +75,6 @@ module RateBeer
     #
     def run_search
       @beers, @breweries = nil
-      doc                = post_request(URI.join(BASE_URL, SEARCH_URL), post_params)
       tables             = doc.css('h2').map(&:text).zip(doc.css('table'))
       beers, breweries   = nil
       tables.each do |(heading, table)|
@@ -84,24 +87,44 @@ module RateBeer
       end
 
       # RateBeer is inconsistent with searching for IPAs. If IPA is in the name
-      # of the beer, replace IPA with India Pale Ale, and add the additional 
+      # of the beer, replace IPA with India Pale Ale, and add the additional
       # results to these results.
-      if query.downcase.include?(" ipa")
-        alt_query = query.downcase.gsub(" ipa", " india pale ale")
+      if query.downcase.include?(' ipa')
+        alt_query = query.downcase.gsub(' ipa', ' india pale ale')
         extra_beers = self.class.new(alt_query).run_search.beers
         @beers = ((@beers || []) + (extra_beers || [])).uniq
       end
-      return self
+      self
     end
 
     alias retrieve_details run_search
 
     private
+    
+    def doc
+      @doc ||= post_request(URI.join(BASE_URL, SEARCH_URL), post_params)
+    end
+
+    def scrape_beers
+      unless instance_variable_defined?('@beers')
+        run_search
+        @beers = @beers.sort_by(&:id)
+      end
+      @beers
+    end
+
+    def scrape_breweries
+      unless instance_variable_defined?('@breweries')
+        run_search
+        @breweries = @breweries.sort_by(&:id)
+      end
+      @breweries
+    end
 
     # Generate parameters to use in POST request.
     #
     def post_params
-      { "BeerName" => @query }
+      { 'BeerName' => @query }
     end
 
     # Process breweries table returned in search.
@@ -118,9 +141,9 @@ module RateBeer
     def process_breweries_table(table)
       table.css('tr').map do |row|
         result = [:id, :name, :location, :url].zip([nil]).to_h
-        result[:name], result[:location] = row.element_children.map { |x| 
-          fix_characters(x.text) 
-        }
+        result[:name], result[:location] = row.element_children.map do |x|
+          fix_characters(x.text)
+        end
         result[:url] = row.at_css('a')['href']
         result[:id]  = result[:url].split('/').last.to_i
         Brewery.new(result[:id], name: result[:name])
@@ -168,7 +191,7 @@ module RateBeer
       result[:url] = row.at_css('a')['href']
       result[:id]  = result[:url].split('/').last.to_i
       b = Beer.new(result[:id], name: result[:name])
-      b.brewery.name
+      b.brewery.name if @scrape_beer_brewers
       b
     end
 

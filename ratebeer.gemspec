@@ -1,12 +1,12 @@
 Gem::Specification.new do |s|
   s.name = "ratebeer"
-  s.version = "0.0.8"
+  s.version = "0.1.0"
   s.default_executable = "ratebeer"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Dan Meakin"]
-  s.date = %q{2016-07-16}
-  s.description = %q{RateBeer provides a way to access beer & brewery data from RateBeer.com.}
+  s.date = %q{2016-07-30}
+  s.description = %q{RateBeer provides a way to access information from RateBeer.com.}
   s.email = %q{dan@danmeakin.com}
   s.files = Dir['lib/**/*.rb'] + Dir['bin/*'] + Dir['[A-Z]*'] + Dir['spec/**/*']
   s.require_paths = ['lib']

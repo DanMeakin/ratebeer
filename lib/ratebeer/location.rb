@@ -1,6 +1,6 @@
-require_relative "brewery"
-require_relative "style"
-require_relative "urls"
+require_relative 'brewery'
+require_relative 'style'
+require_relative 'urls'
 
 module RateBeer
   class Location
@@ -25,41 +25,52 @@ module RateBeer
     #
     def initialize(id, location_type: nil, name: nil, **options)
       super
-      if location_type.nil? || !([:country, :region].include?(location_type))
-        raise ArgumentError.new("location_type must be supplied and must be "\
-                                "either country or region")
+      if location_type.nil? || ![:country, :region].include?(location_type)
+        raise ArgumentError.new('location_type must be supplied and must be '\
+                                'either country or region')
       end
       @location_type = location_type
     end
 
+    def doc
+      unless instance_variable_defined?('@doc')
+        @doc = noko_doc(url)
+        validate_location
+      end
+      @doc
+    end
+
+    def heading
+      @heading ||= doc.at_css('.col-lg-9')
+    end
+
     private
 
-    # Retrive details about this location from the website.
-    #
-    # This method stores the retrived details in instance variables
-    # of the location instance.
-    #
-    def retrieve_details
-      doc          = noko_doc(url)
-      heading      = doc.css('.col-lg-9').first
-      brewery_info = doc.css('#tabs table')
+    def validate_location
+      if @doc.at_css('h1').text.include? 'n/a'
+        raise PageNotFoundError.new("#{self.class.name} not found - #{id}")
+      end
+    end
 
+    def scrape_name
       @name = heading.at_css('h1')
                      .text
                      .split('Breweries')
                      .first
                      .strip
-      if @name == "n/a" || @name == "RateBeer Robot Oops!"
-        raise PageNotFoundError.new("#{self.class.name} not found - #{id}")
-      end
+    end
 
+    def scrape_num_breweries
       @num_breweries = heading.at_css('li.active')
                               .text
                               .scan(/Active \((\d*)\)/)
                               .first
                               .first
                               .to_i
+    end
 
+    def scrape_breweries
+      brewery_info = doc.css('#tabs table')
       @breweries = brewery_info.flat_map.with_index do |tbl, i|
         status = i == 0 ? 'Active' : 'Out of Business'
 
@@ -83,7 +94,6 @@ module RateBeer
                       status:      status)
         end
       end
-      nil
     end
 
     # Return URL for page containing information on this location.
@@ -97,7 +107,7 @@ module RateBeer
                when :region
                  URI.join(BASE_URL, region_url(id))
                else
-                 raise "invalid location type: #{@location_type.to_s}"
+                 raise "invalid location type: #{@location_type}"
                end
     end
   end
