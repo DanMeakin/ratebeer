@@ -9,5 +9,6 @@ gem 'nokogiri'
 group :test do
   gem 'rspec'
   gem 'rake'
-  gem 'codeclimate-test-reporter'
+  gem 'simplecov'
+  gem 'codeclimate-test-reporter', '~> 1.0.0'
 end
