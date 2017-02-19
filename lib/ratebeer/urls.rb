@@ -3,7 +3,7 @@ module RateBeer
   # This module contains URLs or URL patterns for use throughout the Gem.
   #
   module URLs
-    BASE_URL   = "http://www.ratebeer.com"
+    BASE_URL   = "https://www.ratebeer.com"
     SEARCH_URL = "/findbeer.asp"
 
     # Return URL to info page for beer with id

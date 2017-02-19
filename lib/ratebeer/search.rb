@@ -108,7 +108,7 @@ module RateBeer
     def scrape_beers
       unless instance_variable_defined?('@beers')
         run_search
-        @beers = @beers.sort_by(&:id)
+        @beers = @beers && @beers.sort_by(&:id)
       end
       @beers
     end

@@ -14,10 +14,12 @@ module RateBeer
 
     # Run method on inclusion in class.
     def self.included(base)
-      base.data_keys.each do |attr|
-        define_method(attr) do
-          send("scrape_#{attr}") unless instance_variable_defined?("@#{attr}")
-          instance_variable_get("@#{attr}")
+      if base.respond_to?(:data_keys)
+        base.data_keys.each do |attr|
+          define_method(attr) do
+            send("scrape_#{attr}") unless instance_variable_defined?("@#{attr}")
+            instance_variable_get("@#{attr}")
+          end
         end
       end
     end
