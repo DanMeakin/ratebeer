@@ -9,9 +9,17 @@ require_relative 'urls'
 
 module RateBeer
   module Beer
+    # The Beer class.
+    #
+    # This class represents one beer found on RateBeer.com, and provides
+    # functionality for obtaining information from the site.
+    #
+    # The key functionality is defined in the self.data_keys method, each key
+    # representing a piece of accessible data.
     class Beer
-      # Each key represents an item of data accessible for each beer, and defines
-      # dynamically a series of methods for accessing this data.
+      # Each key represents an item of data accessible for each beer. The
+      # included scraping module defines dynamically a series of methods for
+      # accessing this data.
       #
       def self.data_keys
         [:name,
@@ -73,8 +81,9 @@ module RateBeer
       private
 
       def validate_beer
-        error_message = 'we didn\'t find this beer'
-        raise PageNotFoundError, "Beer not found - #{id}" if name == error_message
+        error_indicator = 'we didn\'t find this beer'
+        error_message = "Beer not found - #{id}"
+        raise PageNotFoundError, error_message if name == error_indicator
       end
 
       def scrape_name
