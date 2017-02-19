@@ -4,14 +4,14 @@ describe RateBeer do
   describe '.beer' do
     it 'creates a new beer' do
       beer = RateBeer.beer(1234, 'Magic Lager')
-      expect(beer).to eq RateBeer::Beer.new(1234, name: 'Magic Lager')
+      expect(beer).to eq RateBeer::Beer::Beer.new(1234, name: 'Magic Lager')
     end
   end
 
   describe '.brewery' do
     it 'creates a new brewery' do
       brewery = RateBeer.brewery(456, 'Magic BrewCo')
-      expect(brewery).to eq RateBeer::Brewery.new(456, name: 'Magic BrewCo')
+      expect(brewery).to eq RateBeer::Brewery::Brewery.new(456, name: 'Magic BrewCo')
     end
   end
 

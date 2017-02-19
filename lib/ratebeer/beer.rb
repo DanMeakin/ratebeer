@@ -94,7 +94,7 @@ module RateBeer
         brewery_element = doc.at_css("a[itemprop='brand']")
         brewery_id = id_from_link(brewery_element)
         brewery_name = fix_characters(brewery_element.text)
-        @brewery = Brewery.new(brewery_id, name: brewery_name)
+        @brewery = Brewery::Brewery.new(brewery_id, name: brewery_name)
       end
 
       def scrape_style
