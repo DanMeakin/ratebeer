@@ -2,21 +2,21 @@ require 'spec_helper'
 
 describe RateBeer::Brewery do
   before :all do
-    @valid     = RateBeer::Brewery.new(8534) # ID for BrewDog
-    @with_name = RateBeer::Brewery.new(1069, name: 'Cantillon Brewery')
+    @valid     = RateBeer.brewery(8534) # ID for BrewDog
+    @with_name = RateBeer.brewery(1069, 'Cantillon Brewery')
   end
 
   describe '#new' do
     it 'creates a brewery instance' do
-      expect(@valid).to be_a RateBeer::Brewery
+      expect(@valid).to be_a RateBeer::Brewery::Brewery
     end
 
     it 'requires an ID# as parameter' do
-      expect { RateBeer::Brewery.new }.to raise_error(ArgumentError)
+      expect { RateBeer::Brewery::Brewery.new }.to raise_error(ArgumentError)
     end
 
     it 'accepts a name parameter' do
-      expect(@with_name).to be_a RateBeer::Brewery
+      expect(@with_name).to be_a RateBeer::Brewery::Brewery
     end
   end
 
@@ -36,7 +36,7 @@ describe RateBeer::Brewery do
     end
 
     it 'returns an array of beer instances' do
-      @valid.beers.each { |b| expect(b).to be_a RateBeer::Beer }
+      @valid.beers.each { |b| expect(b).to be_a RateBeer::Beer::Beer }
     end
 
     it 'returns a list of beers produced by brewery' do
@@ -48,7 +48,7 @@ describe RateBeer::Brewery do
                162_521,
                87_321,
                118_987,
-               119_594].map { |id| RateBeer::Beer.new(id) }
+               119_594].map { |id| RateBeer.beer(id) }
       expect(@valid.beers).to include(*beers)
     end
   end

@@ -23,7 +23,7 @@ module RateBeer
   # @return [RateBeer::Brewery] brewery with passed ID#
   #
   def brewery(id, name = nil)
-    Brewery.new(id, name: name)
+    Brewery::Brewery.new(id, name: name)
   end
 
   # Create new style instance, using ID and name passed as arguments.
