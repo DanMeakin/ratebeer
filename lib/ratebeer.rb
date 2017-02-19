@@ -13,7 +13,7 @@ module RateBeer
   # @return [RateBeer::Beer] beer with passed ID#
   #
   def beer(id, name = nil)
-    Beer.new(id, name: name)
+    Beer::Beer.new(id, name: name)
   end
 
   # Create new brewery instance, using ID and name passed as arguments.

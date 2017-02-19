@@ -1,23 +1,23 @@
 require 'spec_helper'
 
-describe RateBeer::Beer do
+describe RateBeer::Beer::Beer do
   before :all do
-    @valid     = RateBeer::Beer.new(1411) # ID for Tennents Lager (sorry...)
-    @retired   = RateBeer::Beer.new(213_225) # ID for BrewDog Vice Bier
-    @with_name = RateBeer::Beer.new(422, name: 'Stone IPA')
+    @valid     = RateBeer.beer(1411) # ID for Tennents Lager (sorry...)
+    @retired   = RateBeer.beer(213_225) # ID for BrewDog Vice Bier
+    @with_name = RateBeer.beer(422, 'Stone IPA')
   end
 
   describe '#new' do
     it 'creates a beer instance' do
-      expect(@valid).to be_a RateBeer::Beer
+      expect(@valid).to be_a RateBeer::Beer::Beer
     end
 
     it 'requires an ID# as parameter' do
-      expect { RateBeer::Beer.new }.to raise_error(ArgumentError)
+      expect { RateBeer.beer }.to raise_error(ArgumentError)
     end
 
     it 'accepts a name parameter' do
-      expect(@with_name).to be_a RateBeer::Beer
+      expect(@with_name).to be_a RateBeer::Beer::Beer
     end
   end
 
@@ -46,9 +46,7 @@ describe RateBeer::Beer do
                                              :url,
                                              :style,
                                              :glassware,
-                                             :availability,
                                              :abv,
-                                             :calories,
                                              :description,
                                              :retired,
                                              :rating)
