@@ -40,10 +40,6 @@ module RateBeer
       @doc
     end
 
-    def heading
-      @heading ||= doc.at_css('.col-lg-9')
-    end
-
     private
 
     def validate_location
@@ -53,20 +49,19 @@ module RateBeer
     end
 
     def scrape_name
-      @name = heading.at_css('h1')
-                     .text
-                     .split('Breweries')
-                     .first
-                     .strip
+      @name = doc.at_css('h1')
+                 .text
+                 .split('Breweries')
+                 .first
+                 .strip
     end
 
     def scrape_num_breweries
-      @num_breweries = heading.at_css('li.active')
-                              .text
-                              .scan(/Active \((\d*)\)/)
-                              .first
-                              .first
-                              .to_i
+      @num_breweries = doc.at_css('li.active')
+                          .text
+                          .split(' ')
+                          .first
+                          .to_i
     end
 
     def scrape_breweries
@@ -86,12 +81,12 @@ module RateBeer
                              .strip
           type = cells[1].text.strip
           established = status == 'Active' ? cells[3].text.to_i : nil
-          Brewery.new(id,
-                      name:        name,
-                      location:    location,
-                      type:        type,
-                      established: established,
-                      status:      status)
+          Brewery::Brewery.new(id,
+                               name:        name,
+                               location:    location,
+                               type:        type,
+                               established: established,
+                               status:      status)
         end
       end
     end

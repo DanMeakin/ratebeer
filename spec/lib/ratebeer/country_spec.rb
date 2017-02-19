@@ -41,7 +41,7 @@ describe RateBeer::Country do
                             2809,
                             2878,
                             11582,
-                            8031].map { |i| RateBeer::Brewery.new(i) }
+                            8031].map { |i| RateBeer::Brewery::Brewery.new(i) }
       expect(@country.breweries).to include(*expected_breweries)
     end
 

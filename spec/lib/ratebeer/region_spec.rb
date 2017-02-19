@@ -39,7 +39,7 @@ describe RateBeer::Region do
     it "returns a series of RateBeer::Brewery instances" do
       expected_breweries = [25_211,
                             3132,
-                            1097].map { |i| RateBeer::Brewery.new(i) }
+                            1097].map { |i| RateBeer::Brewery::Brewery.new(i) }
       expect(@region.breweries).to include(*expected_breweries)
     end
 
