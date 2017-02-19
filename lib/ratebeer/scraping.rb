@@ -1,13 +1,13 @@
+# frozen_string_literal: true
+
 require 'net/http'
 require 'nokogiri'
 require 'open-uri'
 
 module RateBeer
-
   # The Scraping module contains a series of methods to assist with scraping
   # pages from RateBeer.com, and dealing with the results.
   module Scraping
-
     class PageNotFoundError < StandardError; end
 
     attr_reader :id
@@ -36,7 +36,7 @@ module RateBeer
       @id   = id
       @name = name unless name.nil?
       options.each do |k, v|
-        instance_variable_set("@#{k.to_s}", v)
+        instance_variable_set("@#{k}", v)
       end
     end
 

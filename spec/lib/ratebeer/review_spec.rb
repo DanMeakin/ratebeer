@@ -1,147 +1,58 @@
 require 'spec_helper'
 
-describe RateBeer::Review do
+describe RateBeer::Beer::Review do
   before :all do
     # Create Review instance with Beer instance
-    @beer = RateBeer.beer(135361) # BrewDog Punk IPA
-    @constructed_params = { beer: @beer,
-                            reviewer: "Johnny Tester", 
-                            reviewer_rank: 1234,
-                            location: "The Moon",
-                            date: Date.today,
-                            rating: 4.00,
-                            rating_breakdown: { overall: Rational(20, 20),
-                                                aroma: Rational(7, 10),
-                                                appearance: Rational(4, 5),
-                                                taste: Rational(9, 10),
-                                                palate: Rational(3, 5) },
-                            comment: "Specimen review of this beer."}
-    @constructed = RateBeer::Review.new(@constructed_params)
-
-    # Create Review instance with beer ID#
-    @beer_id = 53
-    @params_with_beer_id = @constructed_params.dup.update(beer: @beer_id)
-    @constructed_with_beer_id = RateBeer::Review.new(@params_with_beer_id)
-  end
-
-  describe ".retrieve" do
-    before :all do
-
-      @retrieved     = RateBeer::Review.retrieve(@beer)
-      @reviews_by_id = RateBeer::Review.retrieve(@beer_id)
-      # Test ordering
-      @recent        = RateBeer::Review.retrieve(@beer, order: :most_recent)
-      @top_raters    = RateBeer::Review.retrieve(@beer, order: :top_raters)
-      @highest_score = RateBeer::Review.retrieve(@beer, order: :highest_score)
-      # Test limit
-      @single_review = RateBeer::Review.retrieve(@beer, limit: 1)
-      @many_reviews  = RateBeer::Review.retrieve(@beer, limit: 100)
-    end
-
-    it "retrieves reviews for the specified beer" do
-      @retrieved.each { |r| expect(r).to be_a RateBeer::Review }
-    end
-
-    it "recognises a beer specified by ID#" do
-      expect(@reviews_by_id.first.beer).to eq RateBeer.beer(@beer_id)
-    end
-
-    it "retrieves reviews for beer specified by ID#" do
-      @reviews_by_id.each { |r| expect(r).to be_a RateBeer::Review }
-    end
-
-    it "retrieves ten reviews by default" do
-      expect(@retrieved.length).to eq 10
-    end
-
-    it "retrieves the most recent reviews by default" do
-      expect(@retrieved).to match_array @recent
-    end
-
-    it "retrieves the most recent reviews on request" do
-      @recent.each_cons(2).each { |r1, r2|
-        expect(r1.date).to be >= r2.date
-      }
-    end
-
-    it "retrieves reviews by the top raters on request" do
-      @top_raters.each_cons(2).each { |r1, r2| 
-        expect(r1.reviewer_rank).to be >= r2.reviewer_rank 
-      }
-    end
-
-    it "retrieves the highest rated reviews on request" do
-      @highest_score.each_cons(2).each { |r1, r2|
-        expect(r1.rating).to be >= r2.rating
-      }
-    end
-  end
-
-  describe ".url_suffix" do
-    it "returns a numerical suffix for valid ordering methods" do
-      { most_recent:        "1",
-        top_raters:         "2",
-        highest_score:      "3" }.each { |k, v|
-          expect(RateBeer::Review.url_suffix(k)).to eq v
-        }
-    end
-
-    it "raises error when passed an invalid ordering method" do
-      invalid = :my_favourites
-      expect { RateBeer::Review.url_suffix(invalid) }.to raise_error(ArgumentError)
-    end
+    @chunks = ['4.00 AROMA 7/10 APPEARANCE 4/5 TASTE 9/10 PALATE 3/5 OVERALL 20/20',
+               'Johnny Tester (1234) - The Moon - SEP 8, 2013',
+               'Specimen review of this beer.']
+    @reviewer = 'Johnny Tester'
+    @rank = '1234'
+    @location = 'The Moon'
+    @date = Date.new(2013, 9, 8)
+    @rating = 4.00
+    @rating_breakdown = { overall: Rational(20, 20),
+                          aroma: Rational(7, 10),
+                          appearance: Rational(4, 5),
+                          taste: Rational(9, 10),
+                          palate: Rational(3, 5) }
+    @comment = 'Specimen review of this beer.'
+    @review = RateBeer::Beer::Review.new(@chunks)
   end
 
   describe "#new" do
     it "creates a review instance" do
-      expect(@constructed).to be_a RateBeer::Review
-    end
-
-    it "creates a review instance when passed a beer ID#" do
-      expect(@constructed_with_beer_id).to be_a RateBeer::Review
-    end
-
-    it "requires a full set of parameters" do
-      params = { beer: @beer, 
-                 reviewer: "Johnny Tester",
-                 date: Date.today } # Rating & comment missing
-      expect { RateBeer::Review.new(params) }.to raise_error(ArgumentError)
+      expect(@review).to be_a RateBeer::Beer::Review
     end
   end
 
   describe "#reviewer" do
     it "returns the name of the reviewer of the beer" do
-      expect(@constructed.reviewer).to eq @constructed_params[:reviewer]
-    end
-  end
-
-  describe "#beer" do
-    it "returns the beer reviewed" do
-      expect(@constructed.beer).to eq @constructed_params[:beer]
+      expect(@review.reviewer).to eq @reviewer
     end
   end
 
   describe "#date" do
     it "returns the date of the review" do
-      expect(@constructed.date).to eq @constructed_params[:date]
+      expect(@review.date).to eq @date
     end
   end
 
   describe "#rating" do
     it "returns the rating of the beer" do
-      expect(@constructed.rating).to eq @constructed_params[:rating]
+      expect(@review.rating).to eq @rating
     end
   end
 
   describe "#rating_breakdown" do
     it "returns the broken-down rating of the beer" do
-      expect(@constructed.rating_breakdown).to eq @constructed_params[:rating_breakdown]
+      expect(@review.rating_breakdown).to eq @rating_breakdown
     end
   end
 
   describe "#comment" do
     it "returns the comment attached to the review" do
-      expect(@constructed.comment).to eq @constructed_params[:comment]
+      expect(@review.comment).to eq @comment
     end
   end
 end

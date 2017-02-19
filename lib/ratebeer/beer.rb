@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 require_relative 'beer/alias'
+require_relative 'beer/review'
+require_relative 'beer/review_set'
 require_relative 'brewery'
-require_relative 'review'
 require_relative 'style'
 require_relative 'scraping'
 require_relative 'urls'
@@ -36,9 +37,6 @@ module RateBeer
       include RateBeer::Scraping
       include RateBeer::URLs
 
-      # CSS selector for the root element containing beer information.
-      ROOT_SELECTOR = '#container table'
-
       # CSS selector for the beer information element.
       INFO_SELECTOR = 'table'
 
@@ -64,18 +62,12 @@ module RateBeer
         @doc
       end
 
-      def root
-        @root ||= doc.at_css(ROOT_SELECTOR)
-      end
-
-      def info_root
-        @info_root ||= root.at_css(INFO_SELECTOR)
-      end
-
       # Return reviews of this beer.
       #
       def reviews(order: :most_recent, limit: 10)
-        Review.retrieve(self, order: order, limit: limit)
+        @reviews ||= ReviewSet.new(self,
+                                   review_order: order,
+                                   limit_size: limit).reviews
       end
 
       private

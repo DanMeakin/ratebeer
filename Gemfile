@@ -4,7 +4,7 @@ ruby '2.4.0'
 gemspec
 
 gem 'i18n'
-gem 'nokogiri'
+gem 'nokogiri', '~> 1.7.0'
 
 group :test do
   gem 'rspec'
