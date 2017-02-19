@@ -130,7 +130,7 @@ module RateBeer
     # strings scraped from RateBeer.com
     #
     def fix_characters(string)
-      string = string.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
+      string = string.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
       characters = { nbsp     => " ",
                      "\u0093" => "ž",
                      "\u0092" => "'",

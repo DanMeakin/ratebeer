@@ -35,9 +35,9 @@ module RateBeer
       #
       def all_styles(include_hidden = false)
         doc  = Scraping.noko_doc(URI.join(BASE_URL, '/beerstyles/'))
-        root = doc.at_css('div.container-fluid table')
+        root = doc.at_css('div.container-fluid')
 
-        categories = root.css('.groupname').map(&:text)
+        categories = root.css('h3').map(&:text)
         style_node = root.css('.styleGroup')
 
         styles = style_node.flat_map.with_index do |list, i|
@@ -109,8 +109,8 @@ module RateBeer
       @beers = beer_list.css('tr').drop(1).map do |row|
         cells = row.css('td')
         url   = cells[1].at_css('a')['href']
-        [cells[0].text.to_i, Beer.new(url.split('/').last,
-                                      name: fix_characters(cells[1].text))]
+        [cells[0].text.to_i, Beer::Beer.new(url.split('/').last,
+                                            name: fix_characters(cells[1].text))]
       end.to_h
     end
   end

@@ -124,7 +124,7 @@ module RateBeer
     # Generate parameters to use in POST request.
     #
     def post_params
-      { 'BeerName' => @query }
+      { 'beername' => @query }
     end
 
     # Process breweries table returned in search.
@@ -146,7 +146,7 @@ module RateBeer
         end
         result[:url] = row.at_css('a')['href']
         result[:id]  = result[:url].split('/').last.to_i
-        Brewery.new(result[:id], name: result[:name])
+        Brewery::Brewery.new(result[:id], name: result[:name])
       end
     end
 
@@ -183,14 +183,14 @@ module RateBeer
     def process_beer_row(row)
       result = [:id, :name, :score, :ratings, :url].zip([nil]).to_h
       content = row.element_children.map { |x| fix_characters(x.text) }
-      result[:name] = content.first
+      result[:name] = row.element_children.first.at_css('a').text
       result[:score], result[:ratings] = content.values_at(3, 4)
                                                 .map do |n|
         n.nil? || n.empty? ? nil : n.to_i
       end
       result[:url] = row.at_css('a')['href']
       result[:id]  = result[:url].split('/').last.to_i
-      b = Beer.new(result[:id], name: result[:name])
+      b = Beer::Beer.new(result[:id], name: result[:name])
       b.brewery.name if @scrape_beer_brewers
       b
     end

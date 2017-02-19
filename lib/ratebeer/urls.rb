@@ -1,10 +1,11 @@
-module RateBeer
+# frozen_string_literal: true
 
+module RateBeer
   # This module contains URLs or URL patterns for use throughout the Gem.
   #
   module URLs
-    BASE_URL   = "https://www.ratebeer.com"
-    SEARCH_URL = "/findbeer.asp"
+    BASE_URL   = 'https://www.ratebeer.com'
+    SEARCH_URL = '/search'
 
     # Return URL to info page for beer with id
     #

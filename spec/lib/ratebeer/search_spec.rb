@@ -18,7 +18,7 @@ describe RateBeer::Search do
   describe '#run_search' do
     before :all do
       @failed_search     = RateBeer::Search.new('random param 1234').run_search
-      @successful_search = RateBeer::Search.new('heineken').run_search
+      @successful_search = RateBeer::Search.new('dugges').run_search
     end
 
     it 'executes a search using specified query parameter' do
@@ -45,22 +45,15 @@ describe RateBeer::Search do
     it 'returns a list of specific beers matching the query parameter' do
       beers = @successful_search.beers
       names = beers.map(&:name)
-      expect(names).to include('Heineken',
-                               'Heineken Beer',
-                               'Heineken Golden Fire Strong',
-                               'Heineken Kylian',
-                               'Heineken Oud Bruin',
-                               'Heineken Tarwebok')
+      expect(names).to include('Dugges / Stillwater Tropic Thunder',
+                               'Dugges Almost Imperial',
+                               'Dugges Bärliner')
     end
 
     it 'returns a list of specific breweries matching the query parameter' do
       breweries = @successful_search.breweries
       names     = breweries.map(&:name)
-      expect(names).to include('Heineken UK',
-                               'Heineken Italia',
-                               'Al Ahram (Heineken)',
-                               'Pivovar Corgon (Heineken)',
-                               'Bralima (Heineken)')
+      expect(names).to include('Dugges Bryggeri')
     end
   end
 end

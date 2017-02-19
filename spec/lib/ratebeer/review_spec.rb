@@ -3,7 +3,7 @@ require 'spec_helper'
 describe RateBeer::Review do
   before :all do
     # Create Review instance with Beer instance
-    @beer = RateBeer::Beer.new(135361) # BrewDog Punk IPA
+    @beer = RateBeer.beer(135361) # BrewDog Punk IPA
     @constructed_params = { beer: @beer,
                             reviewer: "Johnny Tester", 
                             reviewer_rank: 1234,
@@ -43,7 +43,7 @@ describe RateBeer::Review do
     end
 
     it "recognises a beer specified by ID#" do
-      expect(@reviews_by_id.first.beer).to eq RateBeer::Beer.new(@beer_id)
+      expect(@reviews_by_id.first.beer).to eq RateBeer.beer(@beer_id)
     end
 
     it "retrieves reviews for beer specified by ID#" do

@@ -57,11 +57,11 @@ module RateBeer
       #   beer, up to the review_limit
       #
       def retrieve(beer, order: :most_recent, limit: 10)
-        if beer.is_a?(RateBeer::Beer)
+        if beer.is_a?(RateBeer::Beer::Beer)
           beer_id = beer.id
         elsif beer.is_a?(Integer)
           beer_id = beer
-          beer    = RateBeer::Beer.new(beer)
+          beer    = RateBeer::Beer::Beer.new(beer)
         else
           raise "unknown beer value: #{beer}"
         end
@@ -69,7 +69,7 @@ module RateBeer
         reviews = num_pages(limit).times.flat_map do |page_number|
           url = URI.join(BASE_URL, review_url(beer_id, url_suffix(order), page_number))
           doc = RateBeer::Scraping.noko_doc(url)
-          root = doc.css("#container table table")[3]
+          root = doc.at_css('.reviews-container')
 
           # All reviews are contained within the sole cell in the sole row of
           # the selected table. Each review consists of rating information, 
@@ -77,7 +77,7 @@ module RateBeer
           #
           # The components are contained within div, small, div tags 
           # respectively. We need to scrape these specifically.
-          root.css('td')
+          root.at_css('div div')
               .children
               .select { |x| x.name == 'div' || x.name == 'small' }
               .map(&:text)
@@ -126,7 +126,7 @@ module RateBeer
       @beer = if options[:beer].is_a?(RateBeer::Beer)
                 options[:beer]
               elsif options[:beer].is_a?(Integer)
-                RateBeer::Beer.new(options[:beer])
+                RateBeer::Beer::Beer.new(options[:beer])
               else
                 raise ArgumentError.new("incorrect beer parameter: #{options[:beer]}")
               end
