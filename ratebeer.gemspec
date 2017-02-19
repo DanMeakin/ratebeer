@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
     s.required_rubygems_version = Gem::Requirement.new('>= 0')
   end
   s.authors = ['Dan Meakin']
-  s.date = '2016-07-30'
+  s.date = '2017-02-19'
   s.description = 'RateBeer provides a way to access information from \
                   \RateBeer.com.'
   s.email = 'dan@danmeakin.com'
